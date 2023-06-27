@@ -79,6 +79,7 @@ def landmark_video(video_path, speaker_count=1, tqdm_enabled=False):
          get_pose_landmarker(speaker_count=speaker_count) as pose_landmarker,
     ):
         cap = cv2.VideoCapture(video_path)
+        print("Successful capture for video_path:", video_path)
 
         # Load the frame rate of the video using OpenCV’s CAP_PROP_FPS
         # You’ll need it to calculate the timestamp for each frame.
@@ -242,7 +243,7 @@ if __name__ == "__main__":
     
     # run a pool with as many cpus as we have
     # cpu_count = multiprocessing.cpu_count()
-    cpu_count = 16
+    cpu_count = 20
     print("Working with {} cpus".format(cpu_count))
     with multiprocessing.Pool(processes=cpu_count) as pool:
         input("Continue? ")
