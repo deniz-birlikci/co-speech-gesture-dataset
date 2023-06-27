@@ -181,8 +181,8 @@ def thread_landmark_fn(thread_input_tuple):
     # Retrieve the landmarks
     try:
         video_landmark = landmark_video(video_path, speaker_count=speaker_count)
-    except:
-        print("Killed thread for video_path:", video_path)
+    except Exception as e:
+        print("Killed thread for video_path:", video_path, "due to error:", e)
         return
     
     # Designate the appropriate output path
