@@ -6,6 +6,7 @@ from tqdm import tqdm
 from dotenv import load_dotenv
 from landmark import Landmark, VideoLandmark
 import multiprocessing
+import concurrent.futures
 import time
 
 # Load environment variables
@@ -188,7 +189,7 @@ def thread_landmark_fn(thread_input_tuple):
     
     # Retrieve the landmarks
     try:
-        video_landmark = landmark_video(video_path, speaker_count=speaker_count, tqdm_enabled=True, tqdm_position=cur_tqdm_position)
+        video_landmark = landmark_video(video_path, speaker_count=speaker_count, tqdm_enabled=False, tqdm_position=cur_tqdm_position)
     except Exception as e:
         print("Killed thread for video_path:", video_path, "due to error:", e)
         return
@@ -226,7 +227,7 @@ def thread_landmark_fn(thread_input_tuple):
                                                    avg_time_per_file_message, estimated_remaining_time_message)
     
     # Print the dynamic output message
-    print(output_message, end='', flush=True)
+    print(output_message)
     
 def clear_output():
     print("\r", end="")
@@ -238,21 +239,33 @@ if __name__ == "__main__":
 
     # get the list of video_files
     video_files = get_video_paths(categories)
-    input("Continue? ")
     clear_output()
     
     # Shared variables
     started = multiprocessing.Value('i', 0)
     progress = multiprocessing.Value('i', 0)
     lock = multiprocessing.Lock()
-    start_time = time.time()
     
     # run a pool with as many cpus as we have
     # cpu_count = multiprocessing.cpu_count()
     cpu_count = 20
     print("Working with {} cpus".format(cpu_count))
+    
+    print("Starting multiprocessing...")
+    start_time = time.time()
     with multiprocessing.Pool(processes=cpu_count) as pool:
-        input("Continue? ")
         pool.map(thread_landmark_fn, video_files)
+    print("Multiprocessing complete in {:.2f}s".format(time.time() - start_time))
+    
+    print("Starting threading...")
+    start_time = time.time()
+    # Create a ThreadPoolExecutor with the specified number of processes
+    with concurrent.futures.ThreadPoolExecutor(max_workers=cpu_count) as executor:
+        # Submit the processing tasks for each video path
+        futures = [executor.submit(thread_landmark_fn, video_tuple) for video_tuple in video_files]
+
+        # Wait for the tasks to complete
+        results = [future.result() for future in concurrent.futures.as_completed(futures)]
+    print("Threading complete in {:.2f}s".format(time.time() - start_time))
     
     print("\nProcessing complete.")  # Print newline after completion
