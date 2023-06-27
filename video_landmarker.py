@@ -10,7 +10,8 @@ import time
 
 # Load environment variables
 load_dotenv()
-BASE_DIRECTORY = os.getenv('BASE_DIRECTORY')
+# BASE_DIRECTORY = os.getenv('BASE_DIRECTORY')
+BASE_DIRECTORY = "/work/mbirlikc/data/"
 
 INPUT_DIRECTORY = os.path.join(BASE_DIRECTORY, r'Interviews')
 OUTPUT_DIRECTORY = os.path.join(BASE_DIRECTORY, r'Processed Interviews')
