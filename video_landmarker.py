@@ -71,7 +71,7 @@ def get_pose_landmarker(speaker_count=1):
 
     return PoseLandmarker.create_from_options(options)
 
-def landmark_video(video_path, speaker_count=1):
+def landmark_video(video_path, speaker_count=1, tqdm_enabled=False):
     landmarks = []
     
     with (get_hand_landmarker() as hand_landmarker,
@@ -94,8 +94,10 @@ def landmark_video(video_path, speaker_count=1):
         timestamp_ms = 0
 
         # Loop through each frame in the video using VideoCapture#read()
-        # for frame_idx in tqdm(range(total_frames), desc='Processing Frames', unit='frame'):
-        for _ in range(total_frames):
+        iterator = range(total_frames)
+        if tqdm_enabled:
+            iterator = tqdm(iterator, desc='Processing Frames', unit='frame')
+        for _ in iterator:
             # Read each frame from the video using VideoCapture's read() method.
             ret, frame = cap.read()
 
