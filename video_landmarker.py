@@ -226,6 +226,7 @@ if __name__ == "__main__":
 
     # get the list of video_files
     video_files = get_video_paths(categories)
+    input("Continue? ")
     clear_output()
     
     # Shared variables
@@ -237,6 +238,7 @@ if __name__ == "__main__":
     cpu_count = multiprocessing.cpu_count()
     print("Working with {} cpus".format(cpu_count))
     with multiprocessing.Pool(processes=cpu_count) as pool:
+        input("Continue? ")
         pool.map(thread_landmark_fn, video_files)
     
     print("\nProcessing complete.")  # Print newline after completion
