@@ -179,7 +179,11 @@ def thread_landmark_fn(thread_input_tuple):
         speaker_count = 1
     
     # Retrieve the landmarks
-    video_landmark = landmark_video(video_path, speaker_count=speaker_count)
+    try:
+        video_landmark = landmark_video(video_path, speaker_count=speaker_count)
+    except:
+        print("Killed thread for video_path:", video_path)
+        return
     
     # Designate the appropriate output path
     file_path = os.path.join(output_directory, "landmark.pkl")
