@@ -71,7 +71,7 @@ def get_pose_landmarker(speaker_count=1):
 
     return PoseLandmarker.create_from_options(options)
 
-def landmark_video(video_path, speaker_count=1, tqdm_enabled=False):
+def landmark_video(video_path, speaker_count=1, tqdm_enabled=True):
     landmarks = []
     
     with (get_hand_landmarker() as hand_landmarker,
@@ -242,7 +242,7 @@ if __name__ == "__main__":
     
     # run a pool with as many cpus as we have
     # cpu_count = multiprocessing.cpu_count()
-    cpu_count = 4
+    cpu_count = 8
     print("Working with {} cpus".format(cpu_count))
     with multiprocessing.Pool(processes=cpu_count) as pool:
         input("Continue? ")
