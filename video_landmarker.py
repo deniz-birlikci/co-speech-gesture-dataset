@@ -71,7 +71,7 @@ def get_pose_landmarker(speaker_count=1):
 
     return PoseLandmarker.create_from_options(options)
 
-def landmark_video(video_path, speaker_count=1, tqdm_enabled=False):
+def landmark_video(video_path, speaker_count=1, tqdm_enabled=False, tqdm_position=0):
     landmarks = []
     
     with (get_hand_landmarker() as hand_landmarker,
@@ -97,7 +97,7 @@ def landmark_video(video_path, speaker_count=1, tqdm_enabled=False):
         # Loop through each frame in the video using VideoCapture#read()
         iterator = range(total_frames)
         if tqdm_enabled:
-            iterator = tqdm(iterator, desc='Processing Frames', unit='frame')
+            iterator = tqdm(iterator, desc='Processing Frames', unit='frame', position=tqdm_position)
         for _ in iterator:
             # Read each frame from the video using VideoCapture's read() method.
             ret, frame = cap.read()
@@ -180,10 +180,14 @@ def thread_landmark_fn(thread_input_tuple):
         speaker_count = 2
     else:
         speaker_count = 1
+        
+    with lock:
+        cur_tqdm_position = started.value
+        started.value += 1
     
     # Retrieve the landmarks
     try:
-        video_landmark = landmark_video(video_path, speaker_count=speaker_count)
+        video_landmark = landmark_video(video_path, speaker_count=speaker_count, tqdm_enabled=True, tqdm_position=cur_tqdm_position)
     except Exception as e:
         print("Killed thread for video_path:", video_path, "due to error:", e)
         return
@@ -237,6 +241,7 @@ if __name__ == "__main__":
     clear_output()
     
     # Shared variables
+    started = multiprocessing.Value('i', 0)
     progress = multiprocessing.Value('i', 0)
     lock = multiprocessing.Lock()
     start_time = time.time()
