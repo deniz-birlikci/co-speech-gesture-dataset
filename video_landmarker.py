@@ -97,7 +97,8 @@ def landmark_video(video_path, speaker_count=1, tqdm_enabled=False, tqdm_positio
         # Loop through each frame in the video using VideoCapture#read()
         iterator = range(total_frames)
         if tqdm_enabled:
-            iterator = tqdm(iterator, desc='Processing Frames', unit='frame', position=tqdm_position)
+            video_id = video_path.split(".mp4")[0].split("@")[-1]
+            iterator = tqdm(iterator, desc=f'Processing {tqdm_position}/{video_id}', unit='frame', position=tqdm_position)
         for _ in iterator:
             # Read each frame from the video using VideoCapture's read() method.
             ret, frame = cap.read()
