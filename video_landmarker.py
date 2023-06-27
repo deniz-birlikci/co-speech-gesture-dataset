@@ -243,7 +243,7 @@ if __name__ == "__main__":
     
     # run a pool with as many cpus as we have
     # cpu_count = multiprocessing.cpu_count()
-    cpu_count = 24
+    cpu_count = 22
     print("Working with {} cpus".format(cpu_count))
     with multiprocessing.Pool(processes=cpu_count) as pool:
         input("Continue? ")
