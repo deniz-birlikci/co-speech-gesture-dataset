@@ -6,6 +6,7 @@ from tqdm import tqdm
 from dotenv import load_dotenv
 from landmark import Landmark, VideoLandmark
 import multiprocessing
+import time
 
 # Load environment variables
 load_dotenv()
@@ -14,10 +15,6 @@ BASE_DIRECTORY = os.getenv('BASE_DIRECTORY')
 INPUT_DIRECTORY = os.path.join(BASE_DIRECTORY, r'Interviews')
 OUTPUT_DIRECTORY = os.path.join(BASE_DIRECTORY, r'Processed Interviews')
 MODELS_DIRECTORY = os.path.join(BASE_DIRECTORY, r'Models')
-
-# Shared variables
-progress = multiprocessing.Value('i', 0)
-lock = multiprocessing.Lock()
 
 def get_hand_landmarker():
     mediapipe_model_path = os.path.join(MODELS_DIRECTORY, "hand_landmarker.task")
@@ -185,14 +182,34 @@ def thread_landmark_fn(thread_input_tuple):
     # Open the file in binary mode and use pickle.dump() to write the instance
     with open(file_path, "wb") as file_handle:
         pickle.dump(video_landmark, file_handle)
-        
+    
+    ###################################
     # Update progress
+    ###################################
     with lock:
         progress.value += 1
         current_progress = progress.value
 
-    # Print progress
-    print("Progress: {}/{}".format(current_progress, len(video_files)))
+    # Calculate elapsed time and average processing time
+    elapsed_time = time.time() - start_time
+    average_time_per_file = elapsed_time / current_progress
+
+    # Calculate estimated remaining time
+    remaining_files = len(video_files) - current_progress
+    estimated_remaining_time = remaining_files * average_time_per_file
+
+    # Create dynamic progress message
+    progress_message = "Progress: {}/{}".format(current_progress, len(video_files))
+    elapsed_time_message = "Elapsed Time: {:.2f}s".format(elapsed_time)
+    avg_time_per_file_message = "Average Time per File: {:.2f}s".format(average_time_per_file)
+    estimated_remaining_time_message = "Estimated Remaining Time: {:.2f}s".format(estimated_remaining_time)
+
+    # Create final output message by concatenating all individual messages
+    output_message = "\r{} | {} | {} | {}".format(progress_message, elapsed_time_message,
+                                                   avg_time_per_file_message, estimated_remaining_time_message)
+    
+    # Print the dynamic output message
+    print(output_message, end='', flush=True)
         
 # Write code that runs if .py file is run as a script
 if __name__ == "__main__":
@@ -202,7 +219,13 @@ if __name__ == "__main__":
     # get the list of video_files
     video_files = get_video_paths(categories)
     
+    # Shared variables
+    progress = multiprocessing.Value('i', 0)
+    lock = multiprocessing.Lock()
+    start_time = time.time()
+    
     # run a pool with as many cpus as we have
     with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
         pool.map(thread_landmark_fn, video_files)
     
+    print("\nProcessing complete.")  # Print newline after completion
