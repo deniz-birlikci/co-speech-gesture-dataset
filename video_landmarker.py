@@ -241,7 +241,8 @@ if __name__ == "__main__":
     start_time = time.time()
     
     # run a pool with as many cpus as we have
-    cpu_count = multiprocessing.cpu_count()
+    # cpu_count = multiprocessing.cpu_count()
+    cpu_count = 4
     print("Working with {} cpus".format(cpu_count))
     with multiprocessing.Pool(processes=cpu_count) as pool:
         input("Continue? ")
