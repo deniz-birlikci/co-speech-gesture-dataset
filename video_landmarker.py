@@ -140,6 +140,9 @@ def get_video_paths(categories):
         # Check if the output directory exists, if not, create it
         if not os.path.exists(output_directory):
             os.makedirs(output_directory)
+            print("Creating directory:", output_directory)
+        else:
+            print("Directory already exists:", output_directory)
         
         # Get a list of all files in the source directory
         files = os.listdir(source_directory)
@@ -158,6 +161,7 @@ def get_video_paths(categories):
             # Check if the file output directory exists, if not, create it
             if not os.path.exists(file_output_directory):
                 os.makedirs(file_output_directory)
+                print("\tCreating directory:", file_output_directory)
             
             # Add the file_path to the list of video_paths
             # represent it as a tuple of (input_category, video_path, video_output_directory)
@@ -210,6 +214,9 @@ def thread_landmark_fn(thread_input_tuple):
     
     # Print the dynamic output message
     print(output_message, end='', flush=True)
+    
+def clear_output():
+    print("\r", end="")
         
 # Write code that runs if .py file is run as a script
 if __name__ == "__main__":
@@ -218,6 +225,7 @@ if __name__ == "__main__":
 
     # get the list of video_files
     video_files = get_video_paths(categories)
+    clear_output()
     
     # Shared variables
     progress = multiprocessing.Value('i', 0)
