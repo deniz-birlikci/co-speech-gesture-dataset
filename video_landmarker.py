@@ -234,7 +234,9 @@ if __name__ == "__main__":
     start_time = time.time()
     
     # run a pool with as many cpus as we have
-    with multiprocessing.Pool(processes=multiprocessing.cpu_count()) as pool:
+    cpu_count = multiprocessing.cpu_count()
+    print("Working with {} cpus".format(cpu_count))
+    with multiprocessing.Pool(processes=cpu_count) as pool:
         pool.map(thread_landmark_fn, video_files)
     
     print("\nProcessing complete.")  # Print newline after completion
