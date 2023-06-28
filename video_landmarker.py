@@ -123,7 +123,7 @@ def landmark_video(video_path, speaker_count=1, tqdm_enabled=False, tqdm_positio
             face_landmarker_result = face_landmarker.detect_for_video(mp_frame, timestamp_ms)
 
             # Save each type of landmark output
-            cur_landmark = Landmark(actual_timestamp_ms, hand_landmarker_result, face_landmarker_result, pose_landmarker_result)
+            cur_landmark = Landmark(actual_timestamp_ms, timestamp_ms, hand_landmarker_result, face_landmarker_result, pose_landmarker_result)
             
             # Append the current landmark to the landmarks array
             landmarks.append(cur_landmark)
