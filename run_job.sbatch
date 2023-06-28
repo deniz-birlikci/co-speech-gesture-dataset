@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -p cpu_long
-#SBATCH --mem=94000
 #SBATCH -c 32
+#SBATCH --mem=60000
 
 # Load any required modules
 # module load python
