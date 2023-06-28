@@ -251,21 +251,23 @@ if __name__ == "__main__":
     cpu_count = 20
     print("Working with {} cpus".format(cpu_count))
     
+    # Multiprocessing takes 4000 seconds
     print("Starting multiprocessing...")
     start_time = time.time()
     with multiprocessing.Pool(processes=cpu_count) as pool:
         pool.map(thread_landmark_fn, video_files)
     print("Multiprocessing complete in {:.2f}s".format(time.time() - start_time))
     
-    print("Starting threading...")
-    start_time = time.time()
-    # Create a ThreadPoolExecutor with the specified number of processes
-    with concurrent.futures.ThreadPoolExecutor(max_workers=cpu_count) as executor:
-        # Submit the processing tasks for each video path
-        futures = [executor.submit(thread_landmark_fn, video_tuple) for video_tuple in video_files]
+    # Threading takes 4300seconds
+    # print("Starting threading...")
+    # start_time = time.time()
+    # # Create a ThreadPoolExecutor with the specified number of processes
+    # with concurrent.futures.ThreadPoolExecutor(max_workers=cpu_count) as executor:
+    #     # Submit the processing tasks for each video path
+    #     futures = [executor.submit(thread_landmark_fn, video_tuple) for video_tuple in video_files]
 
-        # Wait for the tasks to complete
-        results = [future.result() for future in concurrent.futures.as_completed(futures)]
-    print("Threading complete in {:.2f}s".format(time.time() - start_time))
+    #     # Wait for the tasks to complete
+    #     results = [future.result() for future in concurrent.futures.as_completed(futures)]
+    # print("Threading complete in {:.2f}s".format(time.time() - start_time))
     
     print("\nProcessing complete.")  # Print newline after completion
