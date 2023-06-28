@@ -80,7 +80,7 @@ def landmark_video(video_path, speaker_count=1, tqdm_enabled=False, tqdm_positio
          get_pose_landmarker(speaker_count=speaker_count) as pose_landmarker,
     ):
         cap = cv2.VideoCapture(video_path)
-        print("Successful capture for video_path:", video_path)
+        # print("Successful capture for video_path:", video_path)
 
         # Load the frame rate of the video using OpenCV’s CAP_PROP_FPS
         # You’ll need it to calculate the timestamp for each frame.
@@ -234,8 +234,8 @@ def clear_output():
         
 # Write code that runs if .py file is run as a script
 if __name__ == "__main__":
-    categories = ["Two-Player"]
-    # categories = ["One-Player", "Two-Player", "On-Court", "Need-Classification"]
+    # categories = ["Two-Player"]
+    categories = ["One-Player", "On-Court", "Need-Classification"]
 
     # get the list of video_files
     video_files = get_video_paths(categories)
