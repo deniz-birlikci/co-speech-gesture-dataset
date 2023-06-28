@@ -1,6 +1,5 @@
 #!/bin/bash
 #SBATCH -p cpu_long
-#SBATCH --pty
 #SBATCH --mem=94000
 #SBATCH -c 32
 
