@@ -8,7 +8,6 @@ from landmark import Landmark, VideoLandmark
 import multiprocessing
 import concurrent.futures
 import time
-import sys
 
 # Load environment variables
 load_dotenv()
@@ -235,42 +234,6 @@ def clear_output():
         
 # Write code that runs if .py file is run as a script
 if __name__ == "__main__":
-    # Redirect the standard output to a text file
-    try:
-        with open('/work/mbirlikc/co-speech-gesture-dataset/log.txt', 'w') as f:
-            sys.stdout = f  # Assign the file object as the new standard output
-
-            categories = ["One-Player", "On-Court", "Need-Classification"]
-
-            # get the list of video_files
-            video_files = get_video_paths(categories)
-            clear_output()
-            
-            # Shared variables
-            started = multiprocessing.Value('i', 0)
-            progress = multiprocessing.Value('i', 0)
-            lock = multiprocessing.Lock()
-            
-            # run a pool with as many cpus as we have
-            # cpu_count = multiprocessing.cpu_count()
-            cpu_count = 20
-            print("Working with {} cpus".format(cpu_count))
-            
-            # Multiprocessing takes 4000 seconds
-            print("Starting multiprocessing...")
-            start_time = time.time()
-            with multiprocessing.Pool(processes=cpu_count) as pool:
-                pool.map(thread_landmark_fn, video_files)
-            print("Multiprocessing complete in {:.2f}s".format(time.time() - start_time))
-            
-            print("\nProcessing complete.")  # Print newline after completion
-    except Exception as e:
-        print("An error occurred:", e)
-    finally:
-        # Restore the standard output
-        sys.stdout = sys.__stdout__
-    
-"""
     # categories = ["Two-Player"]
     categories = ["One-Player", "On-Court", "Need-Classification"]
 
@@ -308,4 +271,3 @@ if __name__ == "__main__":
     # print("Threading complete in {:.2f}s".format(time.time() - start_time))
     
     print("\nProcessing complete.")  # Print newline after completion
-"""
