@@ -13,7 +13,7 @@ conda activate gesture
 cd /work/mbirlikc/co-speech-gesture-dataset
 
 # Run your Python code
-python video_landmarker.py
+python video_landmarker_with_log.py
 
 # Deactivate the virtual environment if necessary
 conda deactivate
