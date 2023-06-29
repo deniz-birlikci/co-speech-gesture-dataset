@@ -136,7 +136,7 @@ def landmark_video(video_path, speaker_count=1, tqdm_enabled=False, tqdm_positio
     
     return video_landmark
         
-def get_video_paths(categories):
+def get_video_paths(categories, overwride=False):
     video_paths = []
     
     for input_category in categories:
@@ -168,6 +168,11 @@ def get_video_paths(categories):
             if not os.path.exists(file_output_directory):
                 os.makedirs(file_output_directory)
                 print("\tCreating directory:", file_output_directory)
+                
+            # If we are not in overwride mode, check if the file has already been processed
+            # if it has, skip it
+            if not overwride and os.path.exists(os.path.join(file_output_directory, "landmark.pkl")):
+                continue
             
             # Add the file_path to the list of video_paths
             # represent it as a tuple of (input_category, video_path, video_output_directory)
@@ -234,6 +239,7 @@ def clear_output():
         
 # Write code that runs if .py file is run as a script
 if __name__ == "__main__":
+    
     # categories = ["Two-Player"]
     categories = ["One-Player", "On-Court", "Need-Classification"]
 
