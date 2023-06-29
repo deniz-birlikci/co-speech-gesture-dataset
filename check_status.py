@@ -32,9 +32,7 @@ def check_status(categories):
 
 # Write code that runs if .py file is run as a script
 if __name__ == "__main__":
-    # categories = ["Two-Player"]
-    categories = ["One-Player", "On-Court", "Need-Classification"]
-    categories = ["One-Player", "On-Court"]
+    categories = ["One-Player", "On-Court", "Need-Classification", "Two-Player"]
 
     # get the list of video_files
     percentage, job_count = check_status(categories)
