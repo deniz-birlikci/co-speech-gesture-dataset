@@ -240,8 +240,8 @@ def clear_output():
 # Write code that runs if .py file is run as a script
 if __name__ == "__main__":
     
-    categories = ["Two-Player"]
-    # categories = ["One-Player", "On-Court", "Need-Classification"]
+    # categories = ["Two-Player"]
+    categories = ["One-Player", "On-Court", "Need-Classification", "Two-Player"]
 
     # get the list of video_files
     video_files = get_video_paths(categories)
