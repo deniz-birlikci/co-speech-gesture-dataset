@@ -10,7 +10,7 @@
 conda activate gesture
 
 # Change to the directory where your Python code is located
-# cd /path/to/your/python/code/directory
+cd /work/mbirlikc/co-speech-gesture-dataset
 
 # Run your Python code
 python video_landmarker.py
