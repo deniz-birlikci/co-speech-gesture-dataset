@@ -13,9 +13,9 @@ from audio_transcriber import WhisperTranscribing
 
 pipeline = Pipeline([
     AudioRetrieval(),
-    AudioSegmentation(),
-    QAClipping(),
-    WhisperTranscribing()
+    # AudioSegmentation(),
+    # QAClipping(),
+    # WhisperTranscribing()
 ], parent_directory=OUTPUT_DIRECTORY)
 
 # Write code that runs if .py file is run as a script
