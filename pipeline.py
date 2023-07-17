@@ -66,11 +66,11 @@ class Pipeline:
                     available_video_paths.append(video_path)
 
         video_paths = set(available_video_paths)
-        progress_bar = tqdm(total=len(video_paths))
+        # progress_bar = tqdm(total=len(video_paths))
 
         skipped_count = 0
-        for video_path in video_paths:
-            progress_bar.set_description(f"Processing file: {video_path.split('/')[-1]}")
+        for video_path in tqdm(video_paths):
+            # progress_bar.set_description(f"Processing file: {video_path.split('/')[-1]}")
             
             try:
                 self.forward_on_video_file(video_path)
@@ -81,9 +81,9 @@ class Pipeline:
             else:
                 skipped_count += 1
 
-            progress_bar.update(1)
+            # progress_bar.update(1)
 
-        progress_bar.close()
+        # progress_bar.close()
 
     def __call__(self, path):
         if os.path.isfile(path) and path.endswith(".mp4"):
