@@ -1,11 +1,13 @@
 import os
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 import json
 
 PARENT_DIRECTORY = "/work/mbirlikc/data/Processed Interviews/"
 
 class Pipeline:
-    def __init__(self, segments=[], parent_directory=PARENT_DIRECTORY, expect_already_existing_directory=True):
+    def __init__(self, segments=[], 
+                 parent_directory=PARENT_DIRECTORY, 
+                 expect_already_existing_directory=True):
         self.segments = []
         self.expect_already_existing_directory = expect_already_existing_directory
 
@@ -40,8 +42,6 @@ class Pipeline:
 
         return directory_path
 
-    
-
     def forward_on_video_file(self, video_path):
         # Establishing the video path
         self.video_path = video_path
@@ -65,55 +65,25 @@ class Pipeline:
                     video_path = os.path.join(root, file_name)
                     available_video_paths.append(video_path)
 
-        # Initialize the logger
-        if not logger_overwrite and logger_path is not None:
-            with open(logger_path) as json_file:
-                existing_logger = json.load(json_file)
-                already_parsed_paths = set(existing_logger.keys())
-
-            # new_logger_path = logger_path.split(".json")[0] + "_cont.json"
-            # with open(new_logger_path) as json_file:
-            #     existing_logger = json.load(json_file)
-            #     already_parsed_paths = already_parsed_paths | set(existing_logger.keys())
-
-        else:
-            already_parsed_paths = set()
-
-
-        print(f"Found {len(already_parsed_paths)} parsed files already")
-        video_paths = set(available_video_paths) - already_parsed_paths
-        print(f"Paths to parse got down from {len(available_video_paths)} to {len(video_paths)} with the logger")
-
+        video_paths = set(available_video_paths)
         progress_bar = tqdm(total=len(video_paths))
-
-        logger = {}
 
         skipped_count = 0
         for video_path in video_paths:
             progress_bar.set_description(f"Processing file: {video_path.split('/')[-1]}")
-
-            if video_path not in logger:
-                try:
-                    output = self.forward_on_video_file(video_path)
-                    logger[video_path] = output
-                except KeyboardInterrupt:
-                    raise KeyboardInterrupt
-                except:
-                    print(f"FAIL with {video_path}")
+            
+            try:
+                self.forward_on_video_file(video_path)
+            except KeyboardInterrupt:
+                raise KeyboardInterrupt
+            except:
+                print(f"FAIL with {video_path}")
             else:
                 skipped_count += 1
 
             progress_bar.update(1)
 
-            # If there is a specified logger path, update the file
-            if logger_path is not None:
-                new_logger_path = logger_path.split(".json")[0] + "_cont_v2.json"
-                with open(new_logger_path, "w+") as json_file:
-                    json.dump(logger, json_file)
-
         progress_bar.close()
-
-        return logger
 
     def __call__(self, path):
         if os.path.isfile(path) and path.endswith(".mp4"):
