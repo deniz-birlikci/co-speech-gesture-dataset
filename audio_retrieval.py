@@ -2,7 +2,7 @@ from pipeline import Module
 
 from moviepy.editor import VideoFileClip
 import librosa
-# import soundfile as sf
+import soundfile as sf
 import os
 
 class AudioRetrieval(Module):
@@ -67,8 +67,8 @@ class AudioRetrieval(Module):
         resampled_audio = librosa.resample(audio, orig_sr=current_sample_rate, target_sr=desired_sample_rate)
 
         # Save the resampled audio as a WAV file
-        # sf.write(audio_path, resampled_audio, desired_sample_rate)
-        librosa.output.write_wav(audio_path, resampled_audio, desired_sample_rate)
+        sf.write(audio_path, resampled_audio, desired_sample_rate)
+        # librosa.output.write_wav(audio_path, resampled_audio, desired_sample_rate)
 
         return audio_path
 
