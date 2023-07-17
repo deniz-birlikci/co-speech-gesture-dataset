@@ -6,16 +6,16 @@ OUTPUT_DIRECTORY = os.path.join(BASE_DIRECTORY, r'Processed Interviews')
 MODELS_DIRECTORY = os.path.join(BASE_DIRECTORY, r'Models')
 
 from pipeline import Pipeline
-# from audio_diarization import AudioSegmentation
+from audio_diarization import AudioSegmentation
 from audio_retrieval import AudioRetrieval
 from audio_clipping import QAClipping
 from audio_transcriber import WhisperTranscribing
 
 pipeline = Pipeline([
     AudioRetrieval(),
-    # AudioSegmentation(),
-    # QAClipping(),
-    # WhisperTranscribing()
+    AudioSegmentation(),
+    QAClipping(),
+    WhisperTranscribing()
 ], parent_directory=OUTPUT_DIRECTORY)
 
 # Write code that runs if .py file is run as a script
