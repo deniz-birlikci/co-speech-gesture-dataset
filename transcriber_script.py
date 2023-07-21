@@ -166,7 +166,7 @@ def background_function():
         time.sleep(1)
 
     
-def transcribe_single_file(self, audio_path):
+def transcribe_single_file(audio_path):
         try:
             # Determine the device (GPU or CPU) for this transcription
             device = torch.device("cuda", gpu_availability.available_gpus()[0]) if torch.cuda.is_available() else torch.device("cpu")
