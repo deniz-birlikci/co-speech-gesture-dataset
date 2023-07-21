@@ -202,7 +202,7 @@ def transcribing_function():
             
 if __name__ == "__main__":
     # Set up the base directory
-    base_directory = "/work/mbirlikc/data/landmarked/"
+    base_directory = "/work/mbirlikc/data/"
     
     # Set up the locations where search is going to take place
     categories = ["One-Player", "On-Court", "Need-Classification", "Two-Player"]
