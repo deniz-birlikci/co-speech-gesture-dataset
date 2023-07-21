@@ -46,12 +46,6 @@ class WhisperTranscribing():
 
     def transcribe_directory(self, directory_path, avoid_entire_clip=False):
         for root, dirs, files in os.walk(directory_path):
-
-            # If we want to avoid transcribing the whole clip,
-            # and would just rather transcribe each QA session
-            if avoid_entire_clip and root == directory_path:
-                continue
-
             for file_name in files:
                 if file_name.endswith(".wav"):
                     audio_path = os.path.join(root, file_name)
