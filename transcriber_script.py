@@ -91,16 +91,14 @@ def get_transcribe_targets():
     
     return targets
         
-def transcribing_function(queue, lock):
+def transcribing_function(gpu_id, queue, lock):
     # Determine the device (GPU or CPU) for this transcription
-    with lock:
-        if torch.cuda.is_available():
-            gpu_id = gpu_availability.get_available_gpus()[0]
-            device = torch.device("cuda", gpu_id)  
-            print(f"Running with {gpu_id} | {device}")
-        else:
-            device = torch.device("cpu")
-            print("Running with cpu")
+    if torch.cuda.is_available():
+        device = torch.device("cuda", gpu_id)  
+        print(f"Running with {gpu_id} | {device}")
+    else:
+        device = torch.device("cpu")
+        print("Running with cpu")
     
     # Load the model for this specific GPU
     model = WhisperTranscribing.retrieve_model("small.en", device)
@@ -147,8 +145,8 @@ if __name__ == "__main__":
     processes = []
 
     # Start each function in a separate process
-    for _ in range(num_gpus):
-        process = multiprocessing.Process(target=transcribing_function, args=(targets, lock))
+    for gpu_id in range(num_gpus):
+        process = multiprocessing.Process(target=transcribing_function, args=(gpu_id, targets, lock))
         processes.append(process)
         process.start()
 
