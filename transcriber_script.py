@@ -103,7 +103,7 @@ def transcribing_function(queue, lock):
             print("Running with cpu")
     
     # Load the model for this specific GPU
-    model = WhisperTranscribing.retrieve_model("tiny.en", device)
+    model = WhisperTranscribing.retrieve_model("small.en", device)
 
     transcriber = WhisperTranscribing(model)
     
