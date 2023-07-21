@@ -95,7 +95,7 @@ def transcribing_function(queue, lock):
     # Determine the device (GPU or CPU) for this transcription
     with lock:
         if torch.cuda.is_available():
-            gpu_id = gpu_availability.available_gpus()[0]
+            gpu_id = gpu_availability.get_available_gpus()[0]
             device = torch.device("cuda", gpu_id)  
             print(f"Running with {gpu_id} | {device}")
         else:
