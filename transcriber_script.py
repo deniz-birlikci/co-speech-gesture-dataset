@@ -98,7 +98,14 @@ def get_transcribe_targets():
         
 def transcribing_function(queue, lock):
     # Determine the device (GPU or CPU) for this transcription
-    device = torch.device("cuda", gpu_availability.available_gpus()[0]) if torch.cuda.is_available() else torch.device("cpu")
+    with lock:
+        if torch.cuda.is_available():
+            gpu_id = gpu_availability.available_gpus()[0]
+            device = torch.device("cuda", gpu_id)  
+            print(f"Running with {gpu_id} | {device}")
+        else:
+            device = torch.device("cpu")
+            print("Running with cpu")
     
     # Load the model for this specific GPU
     model = WhisperTranscribing.retrieve_model("tiny.en", device)
