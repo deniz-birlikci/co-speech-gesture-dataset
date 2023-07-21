@@ -135,6 +135,8 @@ if __name__ == "__main__":
     
     # Get all subdirectories that can be transcribed
     targets = sorted(get_transcribe_targets())
+    
+    print(targets)
 
     # Set up TQDM
     progress_bar = tqdm(total=len(targets), desc="Processing", unit="iterations")
