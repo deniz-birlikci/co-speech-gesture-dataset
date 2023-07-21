@@ -6,6 +6,7 @@ import torch.cuda
 import gpu_availability
 from tqdm import tqdm
 from functools import lru_cache
+import multiprocessing
 from multiprocessing import Pool, cpu_count, Lock
 import whisper, torch, json, os
 from functools import lru_cache
@@ -139,23 +140,26 @@ if __name__ == "__main__":
     num_gpus = torch.cuda.device_count()
     print(f"Working with {num_gpus} gpus")
 
-    # Create a pool of processes equal to the number of GPUs
-    pool = Pool(processes=num_gpus)
-    
     # The lock to synchronize access to the queue
     lock = Lock()
     
+    # Create a list to hold the process objects
+    processes = []
+
+    # Start each function in a separate process
+    for _ in range(num_gpus):
+        process = multiprocessing.Process(target=transcribing_function, args=(targets, lock))
+        processes.append(process)
+        process.start()
+
     try:
-        # Start the workers asynchronously
-        for _ in range(num_gpus):
-            pool.apply_async(transcribing_function, args=(targets, lock))
-            
-        # Wait for all workers to finish
-        pool.close()
-        pool.join()
+        # Wait for all processes to finish
+        for process in processes:
+            process.join()
     except KeyboardInterrupt:
         print("Terminating due to keyboard interrupt.")
-        pool.terminate()
+        for process in processes:
+            process.terminate()
     finally:
-        pool.close()
-        pool.join()
+        for process in processes:
+            process.join()
