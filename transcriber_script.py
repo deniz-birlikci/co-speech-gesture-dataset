@@ -6,7 +6,7 @@ import torch.cuda
 import gpu_availability
 from tqdm import tqdm
 from functools import lru_cache
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool, cpu_count, Lock
 import whisper, torch, json, os
 from functools import lru_cache
 
@@ -164,41 +164,36 @@ def background_function():
                         bridge.queue.append(subdir_path)
 
         time.sleep(1)
-
+        
     
-def transcribe_single_file(audio_path):
-        try:
-            # Determine the device (GPU or CPU) for this transcription
-            device = torch.device("cuda", gpu_availability.available_gpus()[0]) if torch.cuda.is_available() else torch.device("cpu")
-            
-            # Load the model for this specific GPU
-            model = WhisperTranscribing.retrieve_model("tiny.en", device)
-
-            transcriber = WhisperTranscribing(model)
-            return transcriber.transcribe_file(audio_path)
-        except Exception as e:
-            return f"Error processing {audio_path}: {e}"
+def transcribing_function(queue, lock):
+    # Determine the device (GPU or CPU) for this transcription
+    device = torch.device("cuda", gpu_availability.available_gpus()[0]) if torch.cuda.is_available() else torch.device("cpu")
     
-def transcribing_function():
-    # Determine the number of available GPUs
-    num_gpus = torch.cuda.device_count()
+    # Load the model for this specific GPU
+    model = WhisperTranscribing.retrieve_model("tiny.en", device)
 
-    # Create a pool of processes equal to the number of GPUs
-    pool = Pool(processes=num_gpus)
+    transcriber = WhisperTranscribing(model)
+    
+    time_slept = 0
+    
+    while True:
+        with lock:
+            if not queue:
+                if time_slept > 30:
+                    break
+                else:
+                    time.sleep(5)
+                    time_slept += 5
+                    continue
+                
+            # Remove and get the first argument from the queue
+            path_to_transcribe = queue.pop(0)  
+        
+        progress_bar.set_description(f"{status} | Path: {path_to_transcribe}")
+        transcriber.transcribe_directory(path_to_transcribe)
 
-    while not stop_event.is_set():
-        if bridge.queue:
-            # Get the next path from the queue for transcription
-            path_to_transcribe = bridge.queue.pop(0)
-
-            # Use multiprocessing to transcribe the file concurrently on available GPUs
-            results = pool.map(transcribe_single_file, [path_to_transcribe])
-
-            # Add the transcribed file to the transcribed_directories list
-            bridge.transcribed_directories.append(path_to_transcribe)
-        else:
-            # If the queue is empty, wait for new elements to be added
-            time.sleep(1)
+        bridge.transcribed_directories.append(path_to_transcribe)
             
 if __name__ == "__main__":
     # Set up the base directory
@@ -206,6 +201,7 @@ if __name__ == "__main__":
     
     # Set up the locations where search is going to take place
     categories = ["One-Player", "On-Court", "Need-Classification", "Two-Player"]
+    categories = ["Two-Player"]
     
     # Set up the bridge for threads to communicate data over
     bridge = Bridge()
@@ -224,25 +220,40 @@ if __name__ == "__main__":
     background_thread.daemon = True
     background_thread.start()
 
-    # Create and start the transcribing thread
-    transcribing_thread = threading.Thread(target=transcribing_function)
-    transcribing_thread.daemon = True
-    transcribing_thread.start()
+    # Determine the number of available GPUs
+    num_gpus = torch.cuda.device_count()
+    print(f"Working with {num_gpus} gpus")
 
+    # Create a pool of processes equal to the number of GPUs
+    pool = Pool(processes=num_gpus)
+    
+    # The lock to synchronize access to the queue
+    lock = Lock()
+    
+    # Start the workers asynchronously
+    for _ in range(num_gpus):
+        pool.apply_async(transcribing_function, args=(bridge.queue, lock))
+        
     # Keep the main thread running so the background threads continue to run
     while True:
         try:
             time.sleep(1)
 
-            if status.transcribed >= status.total_videos:
+            if status.transcribed >= status.total_videos and bridge.queue == []:
                 break
             
             while progress_bar.n < status.transcribed:
                 progress_bar.update(1)
 
         except KeyboardInterrupt:
-            break
+            print("Terminating due to keyboard interrupt.")
+            pool.terminate()
 
+    # Terminate the pool
+    pool.terminate()
+    pool.close()
+    pool.join()
+    
     # Terminate the background threads when the user presses Ctrl+C
     # Set the stop_event to signal the threads to stop
     stop_event.set()
@@ -250,4 +261,3 @@ if __name__ == "__main__":
 
     # Wait for the background threads to terminate gracefully
     background_thread.join()
-    transcribing_thread.join()
