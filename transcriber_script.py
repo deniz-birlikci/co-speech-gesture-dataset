@@ -65,39 +65,6 @@ class WhisperTranscribing():
 
         self.transcribe_directory(output_directory)
 
-class Bridge:
-    def __init__(self):
-        self.source_directories = []
-        self.queue = []
-        self.transcribed_directories = []
-
-        self.processed_directory_count = 0
-
-class Status:
-    def __init__(self, bridge):
-        self.bridge = bridge
-        self.update()
-
-    @staticmethod
-    def float_to_percentage(number):
-        percentage_string = "{:.2f}%".format(number * 100)
-        return percentage_string
-    
-    def update(self):
-        self.total_videos = 1706
-        self.available_videos = self.bridge.processed_directory_count
-        self.on_queue = len(set("/".join(dir.split("/")[:-1]) for dir in self.bridge.queue))
-        self.transcribed = len(set("/".join(dir.split("/")[:-1]) for dir in self.bridge.transcribed_directories))
-
-    def __repr__(self):
-        self.update()
-
-        avail_percent = self.float_to_percentage(self.available_videos / self.total_videos)
-        queue_percent = self.float_to_percentage(self.on_queue / self.total_videos)
-        transcribed_perc = self.float_to_percentage(self.transcribed / self.total_videos)
-
-        return (f"{avail_percent} available | {queue_percent} on queue | {transcribed_perc} transcribed")
-
 def get_all_source_directories():
     source_directories = []
 
@@ -108,34 +75,6 @@ def get_all_source_directories():
         source_directories.extend([os.path.join(category_directory, subdir) for subdir in os.listdir(category_directory) if os.path.isdir(os.path.join(category_directory, subdir))])
 
     return source_directories
-
-# Function to check if subdirectories haven't changed for 10 seconds
-def check_subdirectories():
-    processed_directories = set()
-
-    while not stop_event.is_set():
-        # Get all the potential source directories
-        source_directories = set(get_all_source_directories())
-
-        # Remove the ones we have already processed
-        source_directories = source_directories - processed_directories
-        bridge.source_directories = sorted(source_directories)
-
-        # Iterate through the sources
-        for directory in source_directories:
-            subdirectories = [os.path.join(directory, subdir) for subdir in os.listdir(directory) if os.path.isdir(os.path.join(directory, subdir))]
-            if not subdirectories:
-                continue
-
-            last_change_time = os.stat(directory).st_mtime
-            current_time = time.time()
-
-            # If subdirectories haven't changed for 60 seconds, remove the directory from source_directories
-            if current_time - last_change_time > 60:
-                processed_directories.add(directory)
-                bridge.processed_directory_count += 1
-
-        time.sleep(1)
         
 def is_already_transcribed(directory):
     for root, _, files in os.walk(directory):
@@ -144,28 +83,19 @@ def is_already_transcribed(directory):
     return False
 
 # Function to run in the background and append new paths to the array
-def background_function():
-    processing_thread = threading.Thread(target=check_subdirectories)
-    processing_thread.daemon = True
-    processing_thread.start()
+def get_transcribe_targets():
+    source_directories = get_all_source_directories()
+    targets = []
 
-    visited = set()
-
-    while not stop_event.is_set():
-        for directory in bridge.source_directories:
-            subdirectories = [subdir for subdir in os.listdir(directory) if os.path.isdir(os.path.join(directory, subdir))]
-            for subdir in subdirectories:
-                subdir_path = os.path.join(directory, subdir)
-                if subdir_path not in visited:
-                    visited.add(subdir_path)
-                    if is_already_transcribed(subdir_path):
-                        bridge.transcribed_directories.append(subdir_path)
-                    else:
-                        bridge.queue.append(subdir_path)
-
-        time.sleep(1)
-        
+    for directory in source_directories:
+        subdirectories = [subdir for subdir in os.listdir(directory) if os.path.isdir(os.path.join(directory, subdir))]
+        for subdir in subdirectories:
+            subdir_path = os.path.join(directory, subdir)
+            if not is_already_transcribed(subdir_path):
+                targets.append(subdir_path)
     
+    return targets
+        
 def transcribing_function(queue, lock):
     # Determine the device (GPU or CPU) for this transcription
     device = torch.device("cuda", gpu_availability.available_gpus()[0]) if torch.cuda.is_available() else torch.device("cpu")
@@ -175,25 +105,19 @@ def transcribing_function(queue, lock):
 
     transcriber = WhisperTranscribing(model)
     
-    time_slept = 0
-    
     while True:
         with lock:
             if not queue:
-                if time_slept > 30:
-                    break
-                else:
-                    time.sleep(5)
-                    time_slept += 5
-                    continue
+                break
                 
             # Remove and get the first argument from the queue
             path_to_transcribe = queue.pop(0)  
         
-        progress_bar.set_description(f"{status} | Path: {path_to_transcribe}")
+        progress_bar.set_description(f"Path: {path_to_transcribe}")
         transcriber.transcribe_directory(path_to_transcribe)
 
-        bridge.transcribed_directories.append(path_to_transcribe)
+        with lock:
+            progress_bar.update(1)
             
 if __name__ == "__main__":
     # Set up the base directory
@@ -201,24 +125,12 @@ if __name__ == "__main__":
     
     # Set up the locations where search is going to take place
     categories = ["One-Player", "On-Court", "Need-Classification", "Two-Player"]
-    categories = ["Two-Player"]
     
-    # Set up the bridge for threads to communicate data over
-    bridge = Bridge()
-
-    # Set up status
-    status = Status(bridge)
+    # Get all subdirectories that can be transcribed
+    targets = sorted(get_transcribe_targets())
 
     # Set up TQDM
-    progress_bar = tqdm(total=status.total_videos, desc="Processing", unit="iterations")
-
-    # Event to signal the threads to stop
-    stop_event = threading.Event()
-
-    # Create and start the background thread
-    background_thread = threading.Thread(target=background_function)
-    background_thread.daemon = True
-    background_thread.start()
+    progress_bar = tqdm(total=len(targets), desc="Processing", unit="iterations")
 
     # Determine the number of available GPUs
     num_gpus = torch.cuda.device_count()
@@ -230,34 +142,17 @@ if __name__ == "__main__":
     # The lock to synchronize access to the queue
     lock = Lock()
     
-    # Start the workers asynchronously
-    for _ in range(num_gpus):
-        pool.apply_async(transcribing_function, args=(bridge.queue, lock))
-        
-    # Keep the main thread running so the background threads continue to run
-    while True:
-        try:
-            time.sleep(1)
-
-            if status.transcribed >= status.total_videos and bridge.queue == []:
-                break
+    try:
+        # Start the workers asynchronously
+        for _ in range(num_gpus):
+            pool.apply_async(transcribing_function, args=(targets, lock))
             
-            while progress_bar.n < status.transcribed:
-                progress_bar.update(1)
-
-        except KeyboardInterrupt:
-            print("Terminating due to keyboard interrupt.")
-            pool.terminate()
-
-    # Terminate the pool
-    pool.terminate()
-    pool.close()
-    pool.join()
-    
-    # Terminate the background threads when the user presses Ctrl+C
-    # Set the stop_event to signal the threads to stop
-    stop_event.set()
-    progress_bar.close()
-
-    # Wait for the background threads to terminate gracefully
-    background_thread.join()
+        # Wait for all workers to finish
+        pool.close()
+        pool.join()
+    except KeyboardInterrupt:
+        print("Terminating due to keyboard interrupt.")
+        pool.terminate()
+    finally:
+        pool.close()
+        pool.join()
